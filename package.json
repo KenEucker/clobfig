@@ -11,5 +11,20 @@
         "app-root-path": "^3.0.0",
         "deepmerge": "^4.2.2",
         "path": "^0.12.7"
-    }
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/KenEucker/clobfig.git"
+    },
+    "keywords": [
+        "node",
+        "config",
+        "configuration"
+    ],
+    "author": "Ken Eucker <keneucker@gmail.com>",
+    "license": "GPL-3.0",
+    "bugs": {
+        "url": "https://github.com/KenEucker/clobfig/issues"
+    },
+    "homepage": "https://github.com/KenEucker/clobfig#readme",
 }
