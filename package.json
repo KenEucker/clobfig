@@ -1,0 +1,15 @@
+{
+    "name": "clobfig",
+    "version": "1.0.0",
+    "description": "A configurator library",
+    "main": "index.js",
+    "scripts": {
+        "test": "node -e \"console.log(require('.'))\"",
+        "install": "npm install path app-root-path deepmerge"
+    },
+    "dependencies": {
+        "app-root-path": "^3.0.0",
+        "deepmerge": "^4.2.2",
+        "path": "^0.12.7"
+    }
+}
