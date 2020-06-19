@@ -1,0 +1,2 @@
+# clobfig
+A configurator library
