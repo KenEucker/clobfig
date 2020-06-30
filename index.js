@@ -57,8 +57,6 @@ class Clobfig {
         /// Add the data from each of the data files to the clobfig object (ex: pages.json => clobfig.pages)
         this._dataFiles.forEach(addEachDataFile)
 
-        console.log({dataFilesAdded, configFiles})
-
         /// clobber all of the files matching with 'config.js' in the filename together, starting with the added objects
         this.config = merge(dataFilesAdded, configFiles.reduce(clobber, { }))
 
