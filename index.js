@@ -12,7 +12,7 @@ class Clobfig {
 
 		/// Determine root configuration folder
 		this._configFilePathRelative = path.join(__dirname, `../${configFolderName}`)
-		this._configFilePathAppRoot = path.dirname(require.main.filename || process.mainModule.filename)
+		this._configFilePathAppRoot = !!require.main ? path.dirname(require.main.filename) : (!!process.mainModule ? path.dirname(process.mainModule.filename) : process.cwd())
 		this._configFilePathAppRoot = fs.existsSync(this._configFilePathAppRoot) ? path.join(this._configFilePathAppRoot, configFolderName) : path.join(appRoot.path, configFolderName)
 
 		/// include files that match this in their filename (including extension)
