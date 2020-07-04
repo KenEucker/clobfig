@@ -10,10 +10,11 @@ class Clobfig {
 
 	constructor(configFolderName = 'config', configSelectors = ['config.js'], dataSelectors = ['.json']) {
 
+		const calculatedAppRoot = !!require.main ? path.dirname(require.main.filename) : (!!process.mainModule ? path.dirname(process.mainModule.filename) : process.cwd())
+
 		/// Determine root configuration folder
 		this._configFilePathRelative = path.join(__dirname, `../${configFolderName}`)
-		this._configFilePathAppRoot = !!require.main ? path.dirname(require.main.filename) : (!!process.mainModule ? path.dirname(process.mainModule.filename) : process.cwd())
-		this._configFilePathAppRoot = fs.existsSync(this._configFilePathAppRoot) ? path.join(this._configFilePathAppRoot, configFolderName) : path.join(appRoot.path, configFolderName)
+		this._configFilePathAppRoot = fs.existsSync(calculatedAppRoot) ? calculatedAppRoot : appRoot.path
 
 		/// include files that match this in their filename (including extension)
 		this._configSelectors = configSelectors
@@ -26,9 +27,12 @@ class Clobfig {
 			return
 		}
 
-		const configFilePath = path.resolve(relativePathExists ? this._configFilePathRelative : this._configFilePathAppRoot)
+		const appRootPath = path.resolve(relativePathExists ? this._configFilePathRelative : this._configFilePathAppRoot)
+		appRoot.setPath(appRootPath)
 
-		this.getConfig(configFilePath)
+		this._configFilePath = path.join(appRootPath, configFolderName)
+
+		this.getConfig(this._configFilePath)
 
 	}
 
