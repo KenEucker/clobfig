@@ -27,11 +27,10 @@ class Clobfig {
 			return
 		}
 
-		const appRootPath = path.resolve(relativePathExists ? this._configFilePathRelative : this._configFilePathAppRoot)
-		appRoot.setPath(appRootPath)
+		this._appRootPath = path.resolve(relativePathExists ? this._configFilePathRelative : this._configFilePathAppRoot)
+		this._configFilePath = path.join(this._appRootPath, configFolderName)
 
-		this._configFilePath = path.join(appRootPath, configFolderName)
-
+		appRoot.setPath(this._appRootPath)
 		this.getConfig(this._configFilePath)
 
 	}
@@ -40,6 +39,21 @@ class Clobfig {
 
 		/// Set the new config folder
 		this._configFilePath = !!configFilePath ? configFilePath : this._configFilePath
+
+		/// Start with the basics
+		const base = {
+			// Unofficial
+			_configFilePathRelativeL: this._configFilePathRelative,
+			_configFilePathAppRoot: this._configFilePathAppRoot,
+			_configSelectors: this._configSelectors,
+			_configFiles: this._configFiles,
+			_dataSelectors: this._dataSelectors,
+			_dataFiles: this._dataFiles,
+
+			// Official
+			appRootPath: this._appRootPath,
+			configFilePath: this._configFilePath,
+		}
 
 		/// Get all of the config files in the configuration folder
 		const allFilesInConfigFolder = fs.readdirSync(this._configFilePath)
@@ -63,7 +77,7 @@ class Clobfig {
 		this._dataFiles.forEach(addEachDataFile)
 
 		/// clobber all of the files matching with 'config.js' in the filename together, starting with the added objects
-		this.config = merge(dataFilesAdded, configFiles.reduce(clobber, {}))
+		this.config = merge(base, merge(dataFilesAdded, configFiles.reduce(clobber, {})))
 
 	}
 
@@ -77,16 +91,7 @@ class Clobfig {
 			return {}
 		}
 
-		const _exports = this.config
-		_exports._configFilePathRelative = this._configFilePathRelative
-		_exports._configFilePathAppRoot = this._configFilePathAppRoot
-		_exports._configFilePath = this._configFilePath
-		_exports._configSelectors = this._configSelectors
-		_exports._configFiles = this._configFiles
-		_exports._dataSelectors = this._dataSelectors
-		_exports._dataFiles = this._dataFiles
-
-		return _exports
+		return this.config
 
 	}
 
@@ -101,6 +106,7 @@ const ClobfigFactory = (configFolderName) => {
 	const config = clobfig.getConfig()
 
 	config.Clobfig = Clobfig
+	config.AppRoot = appRoot
 
 	return config
 
