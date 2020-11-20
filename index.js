@@ -8,10 +8,7 @@ const appRoot = require('app-root-path')
 
 class Clobfig {
 
-	constructor(opts = {
-		configSelectors: ['config.js'],
-		dataSelectors: ['.json'],
-	}) {
+	constructor(opts = {}) {
 		/// Ensure that a config folder name is set upon construction
 		opts.configFolderName = opts.configFolderName || 'config'
 
@@ -22,8 +19,8 @@ class Clobfig {
 		this._configFilePathAppRoot = fs.existsSync(calculatedAppRoot) ? calculatedAppRoot : appRoot.path
 
 		/// include files that match this in their filename (including extension)
-		this._configSelectors = opts.configSelectors
-		this._dataSelectors = opts.dataSelectors
+		this._configSelectors = opts.configSelectors || ['config.js']
+		this._dataSelectors = opts.dataSelectors || ['.json']
 
 		const relativePathExists = fs.existsSync(this._configFilePathRelative)
 		const appRootPathExists = !relativePathExists ? fs.existsSync(this._configFilePathAppRoot) : false
@@ -89,7 +86,7 @@ class Clobfig {
 
 			/// clobber all of the files matching with 'config.js' in the filename together, starting with the added objects
 			this.config = merge(base, merge(dataFilesAdded, configFiles.reduce(clobber, {})))
-
+			
 			/// finally infect the config with select values from the package json that are set to NaN
 			this.config = Object.keys(this.config).reduce(injectPackageJsonValues, this.config)
 		} catch(e) {
