@@ -44,7 +44,7 @@ class Clobfig {
 		/// Start with the basics
 		const base = {
 			// Unofficial
-			_configFilePathRelativeL: this._configFilePathRelative,
+			_configFilePathRelative: this._configFilePathRelative,
 			_configFilePathAppRoot: this._configFilePathAppRoot,
 			_configSelectors: this._configSelectors,
 			_configFiles: this._configFiles,
