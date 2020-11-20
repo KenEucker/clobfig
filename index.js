@@ -8,17 +8,22 @@ const appRoot = require('app-root-path')
 
 class Clobfig {
 
-	constructor(configFolderName = 'config', configSelectors = ['config.js'], dataSelectors = ['.json']) {
+	constructor(opts = {
+		configSelectors: ['config.js'],
+		dataSelectors: ['.json'],
+	}) {
+		/// Ensure that a config folder name is set upon construction
+		opts.configFolderName = opts.configFolderName || 'config'
 
 		const calculatedAppRoot = !!require.main ? path.dirname(require.main.filename) : (!!process.mainModule ? path.dirname(process.mainModule.filename) : process.cwd())
 
 		/// Determine root configuration folder
-		this._configFilePathRelative = path.join(__dirname, `../${configFolderName}`)
+		this._configFilePathRelative = path.join(__dirname, `../${opts.configFolderName}`)
 		this._configFilePathAppRoot = fs.existsSync(calculatedAppRoot) ? calculatedAppRoot : appRoot.path
 
 		/// include files that match this in their filename (including extension)
-		this._configSelectors = configSelectors
-		this._dataSelectors = dataSelectors
+		this._configSelectors = opts.configSelectors
+		this._dataSelectors = opts.dataSelectors
 
 		const relativePathExists = fs.existsSync(this._configFilePathRelative)
 		const appRootPathExists = !relativePathExists ? fs.existsSync(this._configFilePathAppRoot) : false
@@ -28,17 +33,16 @@ class Clobfig {
 		}
 
 		this._appRootPath = path.resolve(relativePathExists ? this._configFilePathRelative : this._configFilePathAppRoot)
-		this._configFilePath = path.join(this._appRootPath, configFolderName)
-
+		this._configFilePath = path.join(this._appRootPath, opts.configFolderName)
+		
+		opts.configFilePath = this._configFilePath
 		appRoot.setPath(this._appRootPath)
-		this.getConfig(this._configFilePath)
-
+		this.getConfig(opts)
 	}
 
-	getConfigurationFilesData(configFilePath) {
-
+	getConfigurationFilesData(opts = {}) {
 		/// Set the new config folder
-		this._configFilePath = !!configFilePath ? configFilePath : this._configFilePath
+		this._configFilePath = !!opts.configFilePath ? opts.configFilePath : this._configFilePath
 
 		/// Start with the basics
 		const base = {
@@ -53,17 +57,18 @@ class Clobfig {
 			// Official
 			appRootPath: this._appRootPath,
 			configFilePath: this._configFilePath,
+			...opts,
 		}
 
 		/// Get all of the config files in the configuration folder
-		const allFilesInConfigFolder = fs.readdirSync(this._configFilePath)
+		const allFilesInConfigFolder = fs.existsSync(this._configFilePath) ? fs.readdirSync(this._configFilePath) : []
 		const packageJson = this.getPackageJson()
 		const configFiles = []
 		const dataFilesAdded = {}
 
 		/// Schema for pulling values from the package.json
-		const jsonInjectSchema = (n, v) => v === `@${n}`
-		const injectPackageJsonValues = (out, configField) => { out[configField] = packageJson[configField] !== 'undefined' && jsonInjectSchema(configField, out[configField]) ? packageJson[configField] : out[configField] ; return out}
+		const jsonInjectSchema = (n, v, o) => v === `@${n}` && o
+		const injectPackageJsonValues = (out, configField) => { out[configField] = packageJson[configField] !== 'undefined' && jsonInjectSchema(configField, out[configField], packageJson[configField]) ? packageJson[configField] : out[configField] ; return out}
 
 		const filterConfigFiles = (filename) => this._configSelectors.reduce((o, s) => o || filename.indexOf(s) !== -1, false)
 		const filterDataFiles = (filename) => this._dataSelectors.reduce((o, s) => o || (filename !== 'config.json' && filename.indexOf(s) !== -1), false)
@@ -71,21 +76,29 @@ class Clobfig {
 		const clobber = (out, configFilename) => merge(out, require(path.join(this._configFilePath, configFilename)))
 		const reorderConfigFiles = (configFilename) => configFilename.indexOf('config.json') !== -1 && configFiles.length ? configFiles.unshift(configFilename) : configFiles.push(configFilename)
 
-		/// Get all of the config files in the configuration folder that match these selectors to be clobbed together
-		this._configFiles = allFilesInConfigFolder.filter(filterConfigFiles)
-		/// Add the data from each of the data files to the clobfig object (ex: pages.json => clobfig.pages)
-		this._configFiles.forEach(reorderConfigFiles)
+		try {
+			/// Get all of the config files in the configuration folder that match these selectors to be clobbed together
+			this._configFiles = allFilesInConfigFolder.filter(filterConfigFiles)
+			/// Add the data from each of the data files to the clobfig object (ex: pages.json => clobfig.pages)
+			this._configFiles.forEach(reorderConfigFiles)
 
-		/// Get all of the json data files in the configuration folder that match these selectors to be added to the config under the name of the json file
-		this._dataFiles = allFilesInConfigFolder.filter(filterDataFiles)
-		/// Add the data from each of the data files to the clobfig object (ex: pages.json => clobfig.pages)
-		this._dataFiles.forEach(addEachDataFile)
+			/// Get all of the json data files in the configuration folder that match these selectors to be added to the config under the name of the json file
+			this._dataFiles = allFilesInConfigFolder.filter(filterDataFiles)
+			/// Add the data from each of the data files to the clobfig object (ex: pages.json => clobfig.pages)
+			this._dataFiles.forEach(addEachDataFile)
 
-		/// clobber all of the files matching with 'config.js' in the filename together, starting with the added objects
-		this.config = merge(base, merge(dataFilesAdded, configFiles.reduce(clobber, {})))
+			/// clobber all of the files matching with 'config.js' in the filename together, starting with the added objects
+			this.config = merge(base, merge(dataFilesAdded, configFiles.reduce(clobber, {})))
 
-		/// finally infect the config with select values from the package json that are set to NaN
-		this.config = Object.keys(this.config).reduce(injectPackageJsonValues, this.config)
+			/// finally infect the config with select values from the package json that are set to NaN
+			this.config = Object.keys(this.config).reduce(injectPackageJsonValues, this.config)
+		} catch(e) {
+			const error = new Error(e.message)
+			error.name = 'Fatal Clobfig Error'
+			error.code = 0
+
+			throw error
+		}
 
 	}
 
@@ -99,27 +112,32 @@ class Clobfig {
 		return {}
 	}
 
-	getConfig(configFilePath) {
+	getConfig(initialOpts = {}) {
 
-		if (!!configFilePath) {
-			this.getConfigurationFilesData(configFilePath)
+		/// If the configFilePath is set, get new config data
+		if (!!initialOpts.configFilePath) {
+			this.getConfigurationFilesData(initialOpts)
 		}
 
+		/// If the current config is not set, meaning the configFilePath returned nothing, then there's only the initialOpts to provide
 		if (!this.config) {
-			return {}
+			return initialOpts
 		}
 
+		/// Return the config currently set
 		return this.config
 
 	}
 
 }
 
-const ClobfigFactory = (configFolderName) => {
+const ClobfigFactory = (initialOpts = {}) => {
+	/// TODO: add support for initialOpts being passed in an as an array of config files to load
+	initialOpts = typeof initialOpts === 'string' ? {
+		configFolderName: initialOpts
+	} : initialOpts
 
-	this.Clobfig = Clobfig
-
-	const clobfig = new Clobfig(configFolderName)
+	const clobfig = new Clobfig(initialOpts)
 
 	const config = clobfig.getConfig()
 
