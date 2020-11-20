@@ -15,7 +15,7 @@ clobfig looks for a config/ folder one folder up or in the root of the running a
 >/config/config.js:
 ```
 module.exports = {
-  config: true
+  version: "@version"
 }
 ```
 
@@ -26,6 +26,12 @@ module.exports = {
 }
 ```
 
+>/package.json:
+```
+{
+  "version": "0.1.0"
+}
+```
 
 >/index.js:
 ```
@@ -37,7 +43,7 @@ console.log(config)
 The code example above will output:
 ```
 {
-  config: true,
+  version: "0.1.0",
   data: {
     somedata: "somevalue"
   },

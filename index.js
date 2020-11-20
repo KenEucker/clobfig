@@ -57,8 +57,13 @@ class Clobfig {
 
 		/// Get all of the config files in the configuration folder
 		const allFilesInConfigFolder = fs.readdirSync(this._configFilePath)
+		const packageJson = this.getPackageJson()
 		const configFiles = []
 		const dataFilesAdded = {}
+
+		/// Schema for pulling values from the package.json
+		const jsonInjectSchema = (n, v) => v === `@${n}`
+		const injectPackageJsonValues = (out, configField) => { out[configField] = packageJson[configField] !== 'undefined' && jsonInjectSchema(configField, out[configField]) ? packageJson[configField] : out[configField] ; return out}
 
 		const filterConfigFiles = (filename) => this._configSelectors.reduce((o, s) => o || filename.indexOf(s) !== -1, false)
 		const filterDataFiles = (filename) => this._dataSelectors.reduce((o, s) => o || (filename !== 'config.json' && filename.indexOf(s) !== -1), false)
@@ -79,6 +84,19 @@ class Clobfig {
 		/// clobber all of the files matching with 'config.js' in the filename together, starting with the added objects
 		this.config = merge(base, merge(dataFilesAdded, configFiles.reduce(clobber, {})))
 
+		/// finally infect the config with select values from the package json that are set to NaN
+		this.config = Object.keys(this.config).reduce(injectPackageJsonValues, this.config)
+
+	}
+
+	getPackageJson(appRootPath = this._appRootPath) {
+		const packageJsonFilePath = path.join(appRootPath, 'package.json')
+
+		if (fs.existsSync(packageJsonFilePath)) {
+			return require(packageJsonFilePath)
+		}
+
+		return {}
 	}
 
 	getConfig(configFilePath) {

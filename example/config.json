@@ -2,5 +2,8 @@
     "sourceFile": "config.json",
     "config": "json",
     "true": true,
-    "false": true
+    "false": true,
+
+    "version": "@version"
+
 }
