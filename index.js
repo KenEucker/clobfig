@@ -64,8 +64,9 @@ class Clobfig {
 		const dataFilesAdded = {}
 
 		/// Schema for pulling values from the package.json
-		const jsonInjectSchema = (n, v, o) => v === `@${n}` && o
-		const injectPackageJsonValues = (out, configField) => { out[configField] = packageJson[configField] !== 'undefined' && jsonInjectSchema(configField, out[configField], packageJson[configField]) ? packageJson[configField] : out[configField] ; return out}
+		const jsonInjectSchema = (n, v, o) => v === `@${n}`
+		const injectPackageJsonValues = (out, configField) => 
+		{ out[configField] = typeof packageJson[configField] !== 'undefined' && jsonInjectSchema(configField, out[configField]) ? packageJson[configField] : out[configField] ; return out }
 
 		const filterConfigFiles = (filename) => this._configSelectors.reduce((o, s) => o || filename.indexOf(s) !== -1, false)
 		const filterDataFiles = (filename) => this._dataSelectors.reduce((o, s) => o || (filename !== 'config.json' && filename.indexOf(s) !== -1), false)
