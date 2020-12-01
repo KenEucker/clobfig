@@ -11,11 +11,12 @@ class Clobfig {
 	constructor(opts = {}) {
 		/// Ensure that a config folder name is set upon construction
 		opts.configFolderName = opts.configFolderName || 'config'
+		opts.relativePath = opts.relativePath || path.join(__dirname, `../${opts.configFolderName}`)
 
 		const calculatedAppRoot = !!require.main ? path.dirname(require.main.filename) : (!!process.mainModule ? path.dirname(process.mainModule.filename) : process.cwd())
 
 		/// Determine root configuration folder
-		this._configFilePathRelative = path.join(__dirname, `../${opts.configFolderName}`)
+		this._configFilePathRelative = opts.relativePath
 		this._configFilePathAppRoot = fs.existsSync(calculatedAppRoot) ? calculatedAppRoot : appRoot.path
 
 		/// include files that match this in their filename (including extension)
