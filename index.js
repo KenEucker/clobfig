@@ -63,6 +63,7 @@ class Clobfig {
 		const packageJson = this.getPackageJson()
 		const configFiles = []
 		const dataFilesAdded = {}
+		let dataFiles = []
 
 		/// Schema for pulling values from the package.json
 		const jsonInjectSchema = (n, v, o) => v === `@${n}`
@@ -76,21 +77,38 @@ class Clobfig {
 		const reorderConfigFiles = (configFilename) => configFilename.indexOf('config.json') !== -1 && configFiles.length ? configFiles.unshift(configFilename) : configFiles.push(configFilename)
 
 		try {
+			let configJs = {}
 			/// Get all of the config files in the configuration folder that match these selectors to be clobbed together
 			this._configFiles = allFilesInConfigFolder.filter(filterConfigFiles)
+
 			/// Add the data from each of the data files to the clobfig object (ex: pages.json => clobfig.pages)
 			this._configFiles.forEach(reorderConfigFiles)
 
+			/// Push the config.js file to the end (as it should be the final stop)
+			if (configFiles.indexOf('config.js') !== -1) {
+				configJs = require(path.join(this._configFilePath, 'config.js'))
+				configFiles.splice(configFiles.indexOf('config.js'), 1)
+			}
+
 			/// Get all of the json data files in the configuration folder that match these selectors to be added to the config under the name of the json file
-			this._dataFiles = allFilesInConfigFolder.filter(filterDataFiles)
+			this._dataFiles = dataFiles = allFilesInConfigFolder.filter(filterDataFiles)
 			/// Add the data from each of the data files to the clobfig object (ex: pages.json => clobfig.pages)
 			this._dataFiles.forEach(addEachDataFile)
 
 			/// clobber all of the files matching with 'config.js' in the filename together, starting with the added objects
-			this.config = merge(base, merge(dataFilesAdded, configFiles.reduce(clobber, {})))
+			const clobberedConfig = configFiles.reduce(clobber, dataFilesAdded)
+
+			this.config = merge.all([base, clobberedConfig, dataFilesAdded, configJs])
 			
 			/// finally infect the config with select values from the package json that are set to NaN
 			this.config = Object.keys(this.config).reduce(injectPackageJsonValues, this.config)
+
+			/// Resave the debug state
+			this.config._configFiles = configFiles
+			/// Resave the debug state
+			this.config._dataFiles = dataFiles
+			this.config._configJsFileRanLast = !!configJs
+
 		} catch(e) {
 			const error = new Error(e.message)
 			error.name = 'Fatal Clobfig Error'
