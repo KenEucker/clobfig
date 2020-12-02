@@ -96,7 +96,7 @@ class Clobfig {
 			this._dataFiles.forEach(addEachDataFile)
 
 			/// clobber all of the files matching with 'config.js' in the filename together, starting with the added objects
-			const clobberedConfig = configFiles.reduce(clobber, dataFilesAdded)
+			const clobberedConfig = configFiles.reduce(clobber, {})
 
 			this.config = merge.all([base, clobberedConfig, dataFilesAdded, configJs])
 			
