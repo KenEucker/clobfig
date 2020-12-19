@@ -74,7 +74,7 @@ class Clobfig {
 		const filterDataFiles = (filename) => this._dataSelectors.reduce((o, s) => o || (filename.indexOf('config.json') === -1 && filename.indexOf(s) !== -1), false)
 		const addEachDataFile = (dataFilename) => dataFilesAdded[dataFilename.replace('.json', '')] = require(path.join(this._configFilePath, dataFilename))
 		const clobber = (out, configFilename) => merge(out, require(path.join(this._configFilePath, configFilename)))
-		const reorderConfigFiles = (configFilename) => configFilename.indexOf('config.json') !== -1 && configFiles.length ? configFiles.unshift(configFilename) : configFiles.push(configFilename)
+		const reorderConfigFiles = (configFilename) => configFilename.indexOf('config.json') === 0 && configFiles.length ? configFiles.unshift(configFilename) : configFiles.push(configFilename)
 
 		try {
 			let configJs = {}
