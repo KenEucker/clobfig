@@ -71,7 +71,7 @@ class Clobfig {
 		{ out[configField] = typeof packageJson[configField] !== 'undefined' && jsonInjectSchema(configField, out[configField]) ? packageJson[configField] : out[configField] ; return out }
 
 		const filterConfigFiles = (filename) => this._configSelectors.reduce((o, s) => o || filename.indexOf(s) !== -1, false)
-		const filterDataFiles = (filename) => this._dataSelectors.reduce((o, s) => o || (filename !== 'config.json' && filename.indexOf(s) !== -1), false)
+		const filterDataFiles = (filename) => this._dataSelectors.reduce((o, s) => o || (filename.indexOf('config.json') === -1 && filename.indexOf(s) !== -1), false)
 		const addEachDataFile = (dataFilename) => dataFilesAdded[dataFilename.replace('.json', '')] = require(path.join(this._configFilePath, dataFilename))
 		const clobber = (out, configFilename) => merge(out, require(path.join(this._configFilePath, configFilename)))
 		const reorderConfigFiles = (configFilename) => configFilename.indexOf('config.json') !== -1 && configFiles.length ? configFiles.unshift(configFilename) : configFiles.push(configFilename)
